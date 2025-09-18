@@ -1,0 +1,12 @@
+gradio
+transformers
+tokenizer
+pandas
+redis
+huggingface_hub
+psutil
+tqdm
+datasets
+torch
+gitpython
+pynvml

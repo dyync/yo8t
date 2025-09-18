@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+redis
+huggingface_hub
+psutil
+tqdm
+torch
+diffusers
+transformers
+tokenizer
+datasets
+accelerate
+safetensors
+gitpython
+pynvml

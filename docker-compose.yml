@@ -1,0 +1,266 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: container_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sys_net
+    volumes:
+      - /redis:/redis
+    restart: unless-stopped
+  
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "7861:7861"
+    networks:
+      - sys_net
+    container_name: container_backend
+    environment:
+      - BACKEND_IP=0.0.0.0
+      - VLLM_PORT=1370
+      - REDIS_PORT=6379
+      - BACKEND_PORT=7861
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./backend:/usr/src/app
+      - ./utils:/usr/src/app/utils   
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped  
+
+  audio:
+    build:
+      context: ./audio
+    ports:
+      - "8000:8000"
+    networks:
+      - sys_net
+    container_name: container_audio
+    environment:
+      - AUDIO_IP=0.0.0.0
+      - AUDIO_PORT=8000
+      - REDIS_PORT=6379
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./audio:/usr/src/app
+      - ./utils:/usr/src/app/utils    
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+      - /tmp:/tmp
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped
+  
+  image:
+    build:
+      context: ./image
+    ports:
+      - "1374:1374"
+    networks:
+      - sys_net
+    container_name: container_image
+    environment:
+      - IMAGE_IP=0.0.0.0
+      - IMAGE_PORT=1374
+      - REDIS_PORT=6379
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./image:/usr/src/app
+      - ./utils:/usr/src/app/utils    
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+      - /tmp:/tmp
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+
+  tts:
+    build:
+      context: ./tts
+    ports:
+      - "1375:1375"
+    networks:
+      - sys_net
+    container_name: container_tts
+    environment:
+      - TTS_IP=0.0.0.0
+      - TTS_PORT=1375
+      - REDIS_PORT=6379
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./tts:/usr/src/app
+      - ./utils:/usr/src/app/utils    
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+      - /tmp:/tmp
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped
+  
+      
+  video:
+    build:
+      context: ./video
+    ports:
+      - "1376:1376"
+    networks:
+      - sys_net
+    container_name: container_video
+    environment:
+      - VIDEO_IP=0.0.0.0
+      - VIDEO_PORT=1376
+      - REDIS_PORT=6379
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./video:/usr/src/app
+      - ./image:/usr/src/app/image  
+      - ./utils:/usr/src/app/utils    
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+      - /tmp:/tmp
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+    
+  vllm:
+    build:
+      context: ./vllm
+    image: xoo4foo/zzvllm52:latest
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "1370:1370"
+    networks:
+      - sys_net
+    container_name: container_vllm_xoo
+    volumes:
+      - /models:/models
+    shm_size: 8gb
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NCCL_DEBUG=INFO
+      - VLLM_PORT=1370
+    command: [
+      "python", "app.py",
+      "--model", "Qwen/Qwen2.5-1.5B-Instruct",
+      "--port", "1370",
+      "--tensor-parallel-size", "2",
+      "--gpu-memory-utilization", "0.85",
+      "--max-model-len", "4096"
+    ]
+  vllm3:
+    build:
+      context: ./vllm3
+    image: xoo4foo/zzvllm52:latest
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "1373:1373"
+    networks:
+      - sys_net
+    container_name: container_vllm_xoo3
+    volumes:
+      - /models:/models
+    shm_size: 8gb
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NCCL_DEBUG=INFO
+      - VLLM_PORT=1373
+    command: [
+      "python", "app.py",
+      "--model", "Qwen/Qwen2.5-1.5B-Instruct",
+      "--port", "1373",
+      "--tensor-parallel-size", "2",
+      "--gpu-memory-utilization", "0.73",
+      "--max-model-len", "4096"
+    ]
+  
+  
+  train:
+    build:
+      context: ./train
+    ports:
+      - "1378:1378"
+    networks:
+      - sys_net
+    container_name: container_train
+    environment:
+      - TRAIN_IP=0.0.0.0
+      - TRAIN_PORT=1378
+      - REDIS_PORT=6379
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./train:/usr/src/app
+      - ./utils:/usr/src/app/utils    
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "7860:7860"
+    networks:
+      - sys_net
+    container_name: container_frontend
+    environment:
+      - FRONTEND_IP=0.0.0.0
+      - VLLM_PORT=1370
+      - REDIS_PORT=6379
+      - FRONTEND_PORT=7860
+      - BACKEND_PORT=7861
+      - AUDIO_PORT=8000
+      - IMAGE_PORT=1374
+      - TTS_PORT=1375
+      - VIDEO_PORT=1376
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./frontend:/usr/src/app
+      - ./image:/usr/src/app/image
+      - ./video:/usr/src/app/video
+      - ./utils:/usr/src/app/utils   
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+      - /tmp:/tmp
+    runtime: nvidia
+    depends_on:
+      - redis
+      - image
+    restart: unless-stopped  
+
+networks:
+  sys_net:
+    name: sys_net
+    driver: bridge
