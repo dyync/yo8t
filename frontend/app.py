@@ -2410,18 +2410,20 @@ def create_app():
 
 
 
+                with gr.Row(visible=True) as row_video_image_out:
+                    video_image_output = gr.Image(value=f'{IMAGE_DEFAULT}', label="Image", show_label=False, type="filepath", visible=False)
+                    video_image_output_path = gr.Textbox(visible=False)
+
 
 
                 with gr.Row() as row_video_out:
                     video_output = gr.Video(value=f'{VIDEO_DEFAULT}', label="Video", show_label=False, visible=False)
-                    video_output_path = gr.Textbox()
+                    video_output_path = gr.Textbox(visible=False)
 
 
                 with gr.Row(visible=True) as row_video_prompt:
                     video_input_toggle=gr.Radio(["prompt", "upload"], value="prompt", label="Select input", info="Generate a new image from a prompt or upload an existing one")
-                with gr.Row(visible=True) as row_video_image_out:
-                    video_image_output = gr.Image(value=f'{IMAGE_DEFAULT}', label="Image", show_label=False, type="filepath", visible=False)
-                    video_image_output_path = gr.Textbox(visible=False)
+
                 with gr.Row(visible=True) as row_video_input:
                     video_input_prompt = gr.Textbox(placeholder=f'Two dragons fighting in space', value=f'Two dragons fighting in space', label="Text prompt", show_label=True, visible=True, lines=2)
 
@@ -2544,13 +2546,13 @@ def create_app():
         # )
 
         btn_video_generate.click(
-            lambda: gr.update(visible=True), 
-            None, 
-            video_image_output
-        ).then(
             get_video_image_path,
             video_image_output,
             video_image_output_path
+        ).then(
+            lambda: gr.update(visible=True), 
+            None, 
+            video_image_output
         ).then(
             video_input_generate,
             [video_input_toggle,video_input_prompt,video_input_upload,video_image_model,video_image_device,video_image_compute_type],
