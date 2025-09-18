@@ -1883,6 +1883,21 @@ def llm_prompt(*params):
             logging.info(f'[llm_prompt] response: {response} ...')
 
 
+            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ START VLLM XOO ...')
+            vllm_start_response = requests.post(BACKEND_URL, json={
+                "method":"load",
+                "vllmcontainer":"container_vllm_xoo",
+                "image":"xoo4foo/zzvllm52:latest",
+                "port":1370,
+                "model":"Qwen/Qwen2.5-1.5B-Instruct",
+                "tensor_parallel_size":2,
+                "gpu_memory_utilization":0.87,
+                "max_model_len":4096
+            }, timeout=60)
+
+            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ VLLM START RES: {vllm_start_response} ...')
+
+
             if response.status_code == 200:          
                 print(f'[llm_prompt] >> got response == 200 ... {response}')
                 logging.info(f'[llm_prompt] >> got response == 200 ... {response}')
@@ -1901,7 +1916,19 @@ def llm_prompt(*params):
 
                 print(f'[llm_prompt] response: {response} ...')
                 logging.info(f'[llm_prompt] response: {response} ...')
+                        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ START VLLM XOO ...')
+                vllm_start_response = requests.post(BACKEND_URL, json={
+                    "method":"load",
+                    "vllmcontainer":"container_vllm_xoo",
+                    "image":"xoo4foo/zzvllm52:latest",
+                    "port":1370,
+                    "model":"Qwen/Qwen2.5-1.5B-Instruct",
+                    "tensor_parallel_size":2,
+                    "gpu_memory_utilization":0.87,
+                    "max_model_len":4096
+                }, timeout=60)
 
+                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ VLLM START RES: {vllm_start_response} ...')
 
 
         req_params = PromptComponents(*params)
@@ -2551,6 +2578,10 @@ def create_app():
             video_image_output,
             video_image_output_path
         ).then(
+            lambda: gr.update(visible=False), 
+            None, 
+            video_output
+        ).then(
             lambda: gr.update(visible=True), 
             None, 
             video_image_output
@@ -2561,23 +2592,11 @@ def create_app():
         ).then(
             lambda: gr.update(visible=True), 
             None, 
-            video_output_path
+            video_output
         ).then(
             video_generate,
             [video_image_output_path,video_input_prompt,video_model,video_device,video_compute_type,video_variant,video_decode_chunk_size,video_motion_bucket_id,video_noise_aug_strength,video_fps],
             [video_output,video_output_path]
-        ).then(
-            lambda: gr.update(visible=False), 
-            None, 
-            video_output_path
-        ).then(
-            lambda: gr.update(visible=False), 
-            None, 
-            video_image_output
-        ).then(
-            lambda: gr.update(visible=True), 
-            None, 
-            video_output
         )
 
         # aaaa
