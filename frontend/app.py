@@ -33,6 +33,7 @@ pipe = r.pipeline()
 async def update_timer():
     return f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} bla"
 
+VLLM_URL = f'http://container_vllm_xoo:{os.getenv("VLLM_PORT")}/status'
 BACKEND_URL = f'http://container_backend:{os.getenv("BACKEND_PORT")}/docker'
 IMAGE_URL = f'http://container_image:{os.getenv("IMAGE_PORT")}/generate'
 
